@@ -5,15 +5,35 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 
 public class frame extends JFrame {
-    private final JPanel panel = new JPanel();
-    private final JButton[] bottone;
-    private  final Random rand = new Random();
-    private final JButton trackButton = new JButton("Track");
-    private final JButton repeatbutton=new JButton("riproduci");
-    private boolean isTracked=false;
+        private final JPanel panel = new JPanel();
+        private final JButton[] bottone;
+        private  final Random rand = new Random();
+        private final JButton trackButton = new JButton("🔖");
+        private final JButton repeatbutton=new JButton("▶️");
+
+        private boolean isTracked=false;
+
+        private final JButton clearbutton=new JButton("🗑️");
+        private final JPanel statepanel=new JPanel();
+
+        private final JSplitPane paneldivider= new JSplitPane(JSplitPane.VERTICAL_SPLIT,panel,statepanel);
+
+        private final JButton stoplay =new JButton("⏹️");
+        private Clip currentClip;
+        private final JTextArea replaysound=new JTextArea();
+
+
+
+
+
+
+
+
+
 
 
 
@@ -26,19 +46,45 @@ public class frame extends JFrame {
         setVisible(true);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
-        setSize(500, 200);
-        add(panel);
-        //component
+        setResizable(true);
+        setSize(500, 400);
+        add(paneldivider);
 
 
+
+        paneldivider.setOneTouchExpandable(true);
+       //component
         File folder = new File("./assets");
         File[] soundFiles = folder.listFiles();
         Clip[] clips=new Clip[soundFiles.length];
-        ArrayList<Integer> clickedButtons = new ArrayList<Integer>();
+        List<Integer> clickedSounds = new ArrayList<>();
+        statepanel.setLayout(new BorderLayout());
 
-        panel.add(trackButton);
-        panel.add(repeatbutton);
+
+        statepanel.add(trackButton,BorderLayout.PAGE_START);
+
+        statepanel.add(repeatbutton,BorderLayout.LINE_START);
+
+        statepanel.add(clearbutton,BorderLayout.CENTER);
+
+        statepanel.add(stoplay,BorderLayout.LINE_END);
+
+
+        statepanel.add(replaysound,BorderLayout.PAGE_END);
+
+        replaysound.setPreferredSize(new Dimension(200,200));
+        replaysound.setRows(12);
+
+
+
+
+
+
+
+
+
+        replaysound.setEditable(false);
+
 
         bottone=new JButton[soundFiles.length];
 
@@ -57,77 +103,84 @@ public class frame extends JFrame {
 
         }// end for button
 
-    for (int i = 0; i < soundFiles.length; i++) {
-        final int j = i;
-
-          clips[i] = AudioSystem.getClip();
 
 
-          clips[i].open(AudioSystem.getAudioInputStream(soundFiles[i]));
+        for (int i = 0; i < soundFiles.length; i++) {
+            final int j = i;
 
+            clips[i] = AudioSystem.getClip();
+            clips[i].open(AudioSystem.getAudioInputStream(soundFiles[i]));
 
+            bottone[i].addActionListener(e -> {
+                if (currentClip != null) {
+                    currentClip.stop();
+                }
+                currentClip = clips[j];
+                clips[j].setFramePosition(0);
+                clips[j].start();
 
-        bottone[i].addActionListener(e -> {
-            clips[j].stop();
-            clips[j].setFramePosition(0);
-            clips[j].start();
-            clickedButtons.add(j);
+                clickedSounds.add(j);
 
-        });
+            });
+        }// end sound assigment
 
-
-    }// end assignament sound
         trackButton.addActionListener(e -> {
+            for(int i=0; i<clickedSounds.size(); i++){
+                int soundIndex = clickedSounds.get(i);
 
-                System.out.print(clickedButtons.size()+"," );
+                System.out.print(soundFiles[soundIndex].getName()+",");
+                replaysound.append((soundFiles[soundIndex].getName()+"\n"));
+            }
+
+
+
+
+
                 isTracked=true;
 
         });// end track buttom
 
         repeatbutton.addActionListener(e -> {
             if (isTracked) {
-                for (int i = 0; i < clickedButtons.size(); i++) {
-                    int buttonid=clickedButtons.get(i);
-
-
-                    try {
-                        clips[buttonid] = AudioSystem.getClip();
-                    } catch (LineUnavailableException ex) {
-                        throw new RuntimeException(ex);
-                    }
-
+                for (int i = 0; i < clickedSounds.size(); i++) {
+                    int buttonid=clickedSounds.get(i);
 
                     try {
-                        clips[buttonid].open(AudioSystem.getAudioInputStream(soundFiles[buttonid]));
-                    } catch (LineUnavailableException | IOException | UnsupportedAudioFileException ex) {
-                        throw new RuntimeException(ex);
+                        clips[buttonid].stop();
+                        clips[buttonid].setFramePosition(0);
+                        clips[buttonid].start();
+                        Thread.sleep(300); //change time if u want play sound separately or in same time
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }
-                    clips[buttonid].setFramePosition(0);
-                    clips[buttonid].start();
+                }
+            }
+        });// end action listener repeat
+        clearbutton.addActionListener(e -> {
+
+            clickedSounds.clear();
+            replaysound.setText("");
 
 
-                   while (clips[buttonid].isRunning()){
-                       try {
-                           Thread.sleep(10);
-                       } catch (InterruptedException ex) {
-                           throw new RuntimeException(ex);
-                       }
+        });// end actio listener clear button
+        // end run
 
 
-                   }// end while
+
+        stoplay.addActionListener(e -> {
+            if (currentClip != null) {
+                currentClip.stop();
+            }
 
 
-                } //end iterator
 
-
-            }// end if tracked
-
-
-        });// end action listener
-
+        });// end event listener
 
 
 
     }// end frame
+
+
+
 
 }// end extend jframe
