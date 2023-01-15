@@ -48,6 +48,7 @@ public class frame extends JFrame {
 
             panel.add(bottone[i]);
             bottone[i].setBackground(new Color(rand.nextInt(256),rand.nextInt(256),rand.nextInt(256)));
+            bottone[i].setToolTipText(String.valueOf(soundFiles[i]));
             bottone[i].setForeground(Color.white);
 
 
